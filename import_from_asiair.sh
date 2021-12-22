@@ -3,13 +3,8 @@ set -euo pipefail
 IFS=$'\n\t'
 shopt -s globstar
 
-PROJECT=${1?Please give the project as parameter}
-
-TODAY=$(date +%Y-%m-%d)
-DATE=${2:-$TODAY}
-
-SOURCE="/Volumes/NO NAME"
-WORKSPACE="/Volumes/TRANSCEND"
+SOURCE=${1?First argument must be the source dir}
+TARGET=${2?Second argument needs to be the target dir}
 
 files=$(ls "$SOURCE"/**/*.fit)
 set +e
@@ -21,8 +16,7 @@ set -e
 
 echo "Found ${lights_n} light, ${biases_n} bias, ${darks_n} dark and ${flats_n} flat source images."
 
-WORKSPACE_TARGET="$WORKSPACE/$DATE $PROJECT"
-echo "Copying to ${WORKSPACE_TARGET}"
+echo "Copying to ${TARGET}"
 
 read -e -r -p "Continue? (y/n) " -i "y" CONTINUE
 
@@ -30,36 +24,37 @@ if [ ! "$CONTINUE" = "y" ]; then
   exit 1
 fi
 
-mkdir -p "$WORKSPACE_TARGET"
+mkdir -p "$TARGET"
 
 if [ "$lights_n" -gt 0 ]; then
   targets=$(ls "$SOURCE"/**/Light/)
   echo "Targets: $(echo "$targets" | tr '\\n' ' ')"
-  echo "Copying ${lights_n} lights to "
   for target in $targets; do
-    target_dir="$WORKSPACE_TARGET/Light/$target"
+    target_dir="$TARGET/Light/$target"
+    lights_batch_n=$(echo "$files" | grep Light | grep -c "$target")
+    echo "Copying ${lights_batch_n} lights to ${target_dir}"
     mkdir -p "$target_dir"
-    cp -u "$SOURCE"/**/Light_"$target"*.fit "$target_dir"
+    cp "$SOURCE"/**/Light_"$target"*.fit "$target_dir"
   done
 fi
 
 if [ "$biases_n" -gt 0 ]; then
-  target_dir="$WORKSPACE_TARGET/Bias"
+  target_dir="$TARGET/Bias"
   echo "Copying ${biases_n} biases to $target_dir"
   mkdir -p "$target_dir"
-  cp -u "$SOURCE"/**/Bias_*.fit "$target_dir"
+  cp "$SOURCE"/**/Bias_*.fit "$target_dir"
 fi
 
 if [ "$darks_n" -gt 0 ]; then
-  target_dir="$WORKSPACE_TARGET/Dark"
+  target_dir="$TARGET/Dark"
   echo "Copying $darks_n darks to $target_dir"
   mkdir -p "$target_dir"
-  cp -u "$SOURCE"/**/Dark_*.fit "$target_dir"
+  cp "$SOURCE"/**/Dark_*.fit "$target_dir"
 fi
 
 if [ "$flats_n" -gt 0 ]; then
-  target_dir="$WORKSPACE_TARGET/Flat"
+  target_dir="$TARGET/Flat"
   echo "Copying $flats_n flats to $target_dir"
   mkdir -p "$target_dir"
-  cp -u "$SOURCE"/**/Flat_*.fit "$target_dir"
+  cp "$SOURCE"/**/Flat_*.fit "$target_dir"
 fi
