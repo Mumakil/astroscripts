@@ -2,7 +2,7 @@
 
 Random scripts to help with astrophotography. I've made these so that they work on my Mac, so if you're not on Mac then YMMV.
 
-## `bulk_edit_fits_headers.py [dir] [header] [value]`
+## `python3 bulk_edit_fits_headers.py [dir] [header] [value]`
 
 Add or replace existing fits headers.
 
