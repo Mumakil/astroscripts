@@ -2,9 +2,13 @@
 
 Random scripts to help with astrophotography. I've made these so that they work on my Mac, so if you're not on Mac then YMMV.
 
-## `bulk_edit_fits_headers.py`
+## `bulk_edit_fits_headers.py [dir] [header] [value]`
 
-Add or replace existing fits headers. Script expects fits files in folder `./bulk/` and will modify them in place. Modify the script to edit the headers you want.
+Add or replace existing fits headers.
+
+* `dir` target dir to operate on
+* `header` fits header name, like `IMGTYP` or `FILTER`
+* `value` value of the header to be set on the images
 
 ## `import_from_asiair.sh [source] [target]`
 
