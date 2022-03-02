@@ -28,7 +28,7 @@ mkdir -p "$TARGET"
 
 if [ "$lights_n" -gt 0 ]; then
   targets=$(ls "$SOURCE"/**/Light/)
-  echo "Targets: $(echo "$targets" | tr '\\n' ' ')"
+  echo "Targets: $(echo "$targets" | tr '\n' ' ')"
   for target in $targets; do
     target_dir="$TARGET/Light/$target"
     lights_batch_n=$(echo "$files" | grep Light | grep -c "$target")
