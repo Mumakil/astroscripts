@@ -27,7 +27,7 @@ fi
 mkdir -p "$TARGET"
 
 if [ "$lights_n" -gt 0 ]; then
-  targets=$(ls "$SOURCE"/**/Light/)
+  targets=$(find "$SOURCE"/**/Light -type d -depth +0 -exec basename {} \;)
   echo "Targets: $(echo "$targets" | tr '\n' ' ')"
   for target in $targets; do
     target_dir="$TARGET/Light/$target"
