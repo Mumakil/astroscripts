@@ -2,13 +2,13 @@
 
 Random scripts to help with astrophotography. I've made these so that they work on my Mac, so if you're not on Mac then YMMV.
 
-## `bulk_edit_fits_headers.sh [glob] [header] [value]`
+## `bulk_edit_fits_headers.sh [header] [value] [files...]`
 
 Add or replace existing fits headers.
 
-* `glob` target files to operate on. Supports `?`, `*` and `**` for glob expansion.
 * `header` fits header name, like `IMGTYP` or `FILTER`
 * `value` value of the header to be set on the images
+* `files` target files to operate on. You can use shell expansion with globs to do something like `/Volumes/Astrophotos/**/Light_*.fit`
 
 ## `import_from_asiair.sh [source] [target]`
 
