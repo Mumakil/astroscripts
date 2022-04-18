@@ -1,3 +1,4 @@
+import os
 import sys
 import csv
 from astropy.io import fits
@@ -14,11 +15,11 @@ print("Extracting headers " + ", ".join(headers) + f" from {len(files)} files")
 
 with open(csvfile, 'w', newline='') as cfile:
     writer = csv.writer(cfile)
-    writer.writerow(['File'] + headers)
+    writer.writerow(['Path', 'Dirname', 'Basename'] + headers)
     for f in files:
       hdul = fits.open(f)
       hdr = hdul[0].header
-      row = [f]
+      row = [f, os.path.dirname(f), os.path.basename(f)]
       for h in headers:
         try:
           row.append(hdr[h])
