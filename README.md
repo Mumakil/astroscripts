@@ -22,3 +22,11 @@ It will then copy every fits file found from `$source` to `$target` subdirectori
 ## `fits_header.sh [file] [[header]]`
 
 Print out fits header information of single file. If header is omitted, will list the names of available headers in the file.
+
+## `statistics.sh [csvfile] [headers] [files...]`
+
+Collects headers from bunch of files and prints them into a csv file.
+
+* `csvfile` path to the output csv file
+* `headers` comma separated list of fits headers to include
+* `files` a glob expression or list of files to include. Most likely doing shell expansion with globs is the way to go.
