@@ -28,5 +28,5 @@ Print out fits header information of single file. If header is omitted, will lis
 Collects headers from bunch of files and prints them into a csv file.
 
 * `csvfile` path to the output csv file
-* `headers` comma separated list of fits headers to include
+* `headers` comma separated list of fits headers to include. A helpful list for at least Asiair users is `IMAGETYP,INSTRUME,FOCALLEN,FILTER,GAIN,CCD-TEMP,EXPOSURE,DATE-OBS`
 * `files` a glob expression or list of files to include. Most likely doing shell expansion with globs is the way to go.
