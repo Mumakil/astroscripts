@@ -1,6 +1,7 @@
 import os
 import shutil
 from datetime import datetime, timedelta
+import sys
 
 def sort_astrophotographs(source_dir, destination_dir):
     """
@@ -92,7 +93,10 @@ def sort_astrophotographs(source_dir, destination_dir):
 
 if __name__ == "__main__":
     # Replace these paths with your actual source and destination directories
-    source_directory = "path/to/raw/astrophotographs"
-    destination_directory = "path/to/sorted/astrophotographs"
+    if len(sys.argv) < 3:
+        print("Usage: python archive_sources.py <source_directory> <destination_directory>")
+        sys.exit(1)
+    source_directory = sys.argv[1]
+    destination_directory = sys.argv[2]
 
     sort_astrophotographs(source_directory, destination_directory)
