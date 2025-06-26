@@ -17,6 +17,8 @@ def sort_astrophotographs(source_dir, destination_dir):
 
     # Dictionary to store flat files by date and filter
     flats_by_date_and_filter = {}
+    # Set to track (session_date, filter_name, target_name) combinations for LIGHT frames
+    used_combinations = set()
 
     # Helper function to parse file names
     def parse_file_name(file_name):
@@ -37,7 +39,7 @@ def sort_astrophotographs(source_dir, destination_dir):
         if observation_datetime.hour < 12:
             observation_datetime -= timedelta(days=1)
 
-        session_date = observation_datetime.strftime("%Y%m%d")
+        session_date = observation_datetime.strftime("%Y-%m-%d")
 
         return frame_type, session_date, target_name, filter_name
 
@@ -64,6 +66,9 @@ def sort_astrophotographs(source_dir, destination_dir):
                 print(f"Skipping unsupported frame type: {file_name}")
                 continue
 
+            # Track used (session_date, filter_name, target_name) for LIGHT frames
+            used_combinations.add((session_date, filter_name, target_name))
+
             # Create target-specific folder structure PREFIX/targetname/SESSION_date/files
             target_folder = os.path.join(destination_dir, target_name, f"SESSION_{session_date}")
             if not os.path.exists(target_folder):
@@ -78,18 +83,17 @@ def sort_astrophotographs(source_dir, destination_dir):
         except Exception as e:
             print(f"Error processing file {file_name}: {e}")
 
-    # Second pass: Copy relevant flat frames to their respective target folders
-    for session_date, filters in flats_by_date_and_filter.items():
-        for filter_name, flat_files in filters.items():
-            for target_name in os.listdir(destination_dir):
-                target_folder = os.path.join(destination_dir, target_name, f"SESSION_{session_date}")
-                if os.path.exists(target_folder):
-                    for flat_file in flat_files:
-                        flat_file_name = os.path.basename(flat_file)
-                        flat_destination_file = os.path.join(target_folder, flat_file_name)
-                        if not os.path.exists(flat_destination_file):  # Avoid duplicate copies
-                            shutil.copy(flat_file, flat_destination_file)
-                            print(f"Copied flat {flat_file_name} to {target_folder}")
+    # Second pass: Copy only matching flat frames to their respective target folders
+    for (session_date, filter_name, target_name) in used_combinations:
+        target_folder = os.path.join(destination_dir, target_name, f"SESSION_{session_date}")
+        if os.path.exists(target_folder):
+            flat_files = flats_by_date_and_filter.get(session_date, {}).get(filter_name, [])
+            for flat_file in flat_files:
+                flat_file_name = os.path.basename(flat_file)
+                flat_destination_file = os.path.join(target_folder, flat_file_name)
+                if not os.path.exists(flat_destination_file):  # Avoid duplicate copies
+                    shutil.copy(flat_file, flat_destination_file)
+                    print(f"Copied flat {flat_file_name} to {target_folder}")
 
 if __name__ == "__main__":
     # Replace these paths with your actual source and destination directories
