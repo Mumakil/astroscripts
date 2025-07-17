@@ -17,8 +17,15 @@ The project uses a simple wrapper pattern:
 
 ### Development Setup
 ```bash
-# Ensure astropy is installed
-pip install astropy
+# Create and activate virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate  # On macOS/Linux
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Or for development with additional tools
+pip install -e .[dev]
 ```
 
 ### Main Tools Usage
