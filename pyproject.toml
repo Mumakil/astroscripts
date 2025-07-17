@@ -9,7 +9,7 @@ description = "Python-based astrophotography utilities for processing FITS files
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
-    {name = "Otto", email = "otto@example.com"}
+    {name = "Otto Vehviläinen", email = "otto@mumakil.fi"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -37,9 +37,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/otto/astroscripts"
-Repository = "https://github.com/otto/astroscripts"
-Issues = "https://github.com/otto/astroscripts/issues"
+Homepage = "https://github.com/Mumakil/astroscripts"
+Repository = "https://github.com/Mumakil/astroscripts"
+Issues = "https://github.com/Mumakil/astroscripts/issues"
 
 [project.scripts]
 bulk-edit-fits-headers = "astroscripts.bulk_edit_fits_headers:main"
