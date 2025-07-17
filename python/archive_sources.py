@@ -2,9 +2,10 @@ import os
 import shutil
 import sys
 from datetime import datetime, timedelta
+from typing import Dict, List, Set, Tuple
 
 
-def sort_astrophotographs(source_dir, destination_dir):
+def sort_astrophotographs(source_dir: str, destination_dir: str) -> None:
     """
     Sorts astrophotographs into folders with structure PREFIX/targetname/date/files
     and includes flat calibration files, taking into account the filter used.
@@ -18,13 +19,13 @@ def sort_astrophotographs(source_dir, destination_dir):
         os.makedirs(destination_dir)
 
     # Dictionary to store flat files by date and filter
-    flats_by_date_and_filter = {}
+    flats_by_date_and_filter: Dict[str, Dict[str, List[str]]] = {}
     # Set to track (session_date, filter_name, target_name) combinations for
     # LIGHT frames
-    used_combinations = set()
+    used_combinations: Set[Tuple[str, str, str]] = set()
 
     # Helper function to parse file names
-    def parse_file_name(file_name):
+    def parse_file_name(file_name: str) -> Tuple[str, str, str, str]:
         parts = file_name.split("_")
         if len(parts) < 6:
             raise ValueError(f"Invalid file name format: {file_name}")

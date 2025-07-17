@@ -1,8 +1,9 @@
 import sys
+from typing import Any
 
 from astropy.io import fits
 
-target = sys.argv[1]
+target: str = sys.argv[1]
 
 if len(sys.argv) == 2:
     try:
@@ -17,9 +18,9 @@ if len(sys.argv) == 2:
         print(f"No such header: {e}")
         exit(1)
 elif len(sys.argv) == 3:
-    header = sys.argv[2]
+    header: str = sys.argv[2]
     try:
-        value = fits.getval(target, header)
+        value: Any = fits.getval(target, header)
     except Exception as e:
         print(f"Could not open file or no such header: {e}")
         exit(1)
