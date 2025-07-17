@@ -1,0 +1,2 @@
+# Core dependencies for astroscripts
+astropy>=5.1,<6.0
