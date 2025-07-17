@@ -1,4 +1,5 @@
 import sys
+
 from astropy.io import fits
 
 if len(sys.argv) < 4:
