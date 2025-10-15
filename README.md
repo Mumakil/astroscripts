@@ -12,6 +12,7 @@ A collection of scripts to assist with astrophotography workflows. These scripts
   - [import_from_asiair.sh](#import_from_asiairsh)
   - [fits_header.sh](#fits_headersh)
   - [statistics.sh](#statisticssh)
+  - [archive_sources.sh](#archive_sourcessh)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -121,6 +122,27 @@ statistics.sh [csvfile] [headers] [files...]
 ```bash
 statistics.sh output.csv IMAGETYP,INSTRUME,FOCALLEN,FILTER,GAIN,CCD-TEMP,EXPOSURE,DATE-OBS /Volumes/Astrophotos/**/*.fit
 ```
+
+---
+
+### `archive_sources.sh`
+
+Sorts astrophotographs into folders with structure `PREFIX/targetname/SESSION_date/files` and includes flat calibration files, taking into account the filter used. Also copies `WeatherData.csv`, `ImageMetaData.csv`, and `AcquisitionDetails.csv` to each destination folder if present.
+
+**Usage**:
+
+#### Single Session
+```bash
+./archive_sources.sh <source_directory> <destination_directory>
+```
+
+#### Batch Mode
+```bash
+./archive_sources.sh <parent_directory_of_sessions> <destination_directory> --batch
+```
+
+- If `--batch` is provided as the third argument, all subdirectories of `<parent_directory_of_sessions>` will be processed as nightly sessions.
+- Without `--batch`, only the specified `<source_directory>` will be processed.
 
 ---
 
