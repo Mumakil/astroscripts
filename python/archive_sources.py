@@ -1,12 +1,15 @@
 import os
 import shutil
-from datetime import datetime, timedelta
 import sys
+from datetime import datetime, timedelta
+from typing import Dict, List, Set, Tuple
 
-def sort_astrophotographs(source_dir, destination_dir):
+
+def sort_astrophotographs(source_dir: str, destination_dir: str) -> None:
     """
-    Sorts astrophotographs into folders with structure PREFIX/targetname/date/files and includes flat calibration files,
-    taking into account the filter used. File names are used to extract metadata instead of FITS headers.
+    Sorts astrophotographs into folders with structure PREFIX/targetname/date/files
+    and includes flat calibration files, taking into account the filter used.
+    File names are used to extract metadata instead of FITS headers.
 
     Args:
         source_dir (str): Path to the directory containing raw astrophotographs.
@@ -16,27 +19,30 @@ def sort_astrophotographs(source_dir, destination_dir):
         os.makedirs(destination_dir)
 
     # Dictionary to store flat files by date and filter
-    flats_by_date_and_filter = {}
-    # Set to track (session_date, filter_name, target_name) combinations for LIGHT frames
-    used_combinations = set()
+    flats_by_date_and_filter: Dict[str, Dict[str, List[str]]] = {}
+    # Set to track (session_date, filter_name, target_name) combinations for
+    # LIGHT frames
+    used_combinations: Set[Tuple[str, str, str]] = set()
 
     # List of special files to copy to each destination folder if present
     special_files = ["WeatherData.csv", "ImageMetaData.csv", "AcquisitionDetails.csv"]
 
     # Helper function to parse file names
-    def parse_file_name(file_name):
-        parts = file_name.split('_')
+    def parse_file_name(file_name: str) -> Tuple[str, str, str, str]:
+        parts = file_name.split("_")
         if len(parts) < 6:
             raise ValueError(f"Invalid file name format: {file_name}")
 
         frame_type = parts[0].upper()  # LIGHT or FLAT
         date_str = parts[1]  # Observation date in YYYY-MM-DD format
         time_str = parts[2]  # Observation time in HH-MM-SS format
-        target_name = parts[3].replace('\\', ' ')  # Target name
+        target_name = parts[3].replace("\\", " ")  # Target name
         filter_name = parts[4]  # Filter name
 
         # Combine date and time to determine observation datetime
-        observation_datetime = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H-%M-%S")
+        observation_datetime = datetime.strptime(
+            f"{date_str} {time_str}", "%Y-%m-%d %H-%M-%S"
+        )
 
         # Adjust date to the session start date (evening to following noon)
         if observation_datetime.hour < 12:
@@ -48,21 +54,25 @@ def sort_astrophotographs(source_dir, destination_dir):
 
     # First pass: Process all files to collect flat frames and move light frames
     for file_name in os.listdir(source_dir):
-        if not file_name.lower().endswith(('.fits', '.fit', '.xisf')):
+        if not file_name.lower().endswith((".fits", ".fit", ".xisf")):
             continue  # Skip non-FITS files
 
         source_file = os.path.join(source_dir, file_name)
 
         try:
             # Parse metadata from the file name
-            frame_type, session_date, target_name, filter_name = parse_file_name(file_name)
+            frame_type, session_date, target_name, filter_name = parse_file_name(
+                file_name
+            )
 
-            is_flat = frame_type == 'FLAT'
-            is_light = frame_type == 'LIGHT'
+            is_flat = frame_type == "FLAT"
+            is_light = frame_type == "LIGHT"
 
             if is_flat:
                 # Store flat files by date and filter
-                flats_by_date_and_filter.setdefault(session_date, {}).setdefault(filter_name, []).append(source_file)
+                flats_by_date_and_filter.setdefault(session_date, {}).setdefault(
+                    filter_name, []
+                ).append(source_file)
                 continue
 
             if not is_light:
@@ -72,8 +82,11 @@ def sort_astrophotographs(source_dir, destination_dir):
             # Track used (session_date, filter_name, target_name) for LIGHT frames
             used_combinations.add((session_date, filter_name, target_name))
 
-            # Create target-specific folder structure PREFIX/targetname/SESSION_date/files
-            target_folder = os.path.join(destination_dir, target_name, f"SESSION_{session_date}")
+            # Create target-specific folder structure
+            # PREFIX/targetname/SESSION_date/files
+            target_folder = os.path.join(
+                destination_dir, target_name, f"SESSION_{session_date}"
+            )
             if not os.path.exists(target_folder):
                 os.makedirs(target_folder)
 
@@ -95,10 +108,14 @@ def sort_astrophotographs(source_dir, destination_dir):
             print(f"Error processing file {file_name}: {e}")
 
     # Second pass: Copy only matching flat frames to their respective target folders
-    for (session_date, filter_name, target_name) in used_combinations:
-        target_folder = os.path.join(destination_dir, target_name, f"SESSION_{session_date}")
+    for session_date, filter_name, target_name in used_combinations:
+        target_folder = os.path.join(
+            destination_dir, target_name, f"SESSION_{session_date}"
+        )
         if os.path.exists(target_folder):
-            flat_files = flats_by_date_and_filter.get(session_date, {}).get(filter_name, [])
+            flat_files = flats_by_date_and_filter.get(session_date, {}).get(
+                filter_name, []
+            )
             for flat_file in flat_files:
                 flat_file_name = os.path.basename(flat_file)
                 flat_destination_file = os.path.join(target_folder, flat_file_name)
