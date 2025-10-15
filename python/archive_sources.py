@@ -24,6 +24,9 @@ def sort_astrophotographs(source_dir: str, destination_dir: str) -> None:
     # LIGHT frames
     used_combinations: Set[Tuple[str, str, str]] = set()
 
+    # List of special files to copy to each destination folder if present
+    special_files = ["WeatherData.csv", "ImageMetaData.csv", "AcquisitionDetails.csv"]
+
     # Helper function to parse file names
     def parse_file_name(file_name: str) -> Tuple[str, str, str, str]:
         parts = file_name.split("_")
@@ -91,6 +94,14 @@ def sort_astrophotographs(source_dir: str, destination_dir: str) -> None:
             destination_file = os.path.join(target_folder, file_name)
             shutil.copy(source_file, destination_file)
 
+            # Copy special files if they exist and haven't been copied yet
+            for special_file in special_files:
+                special_source = os.path.join(source_dir, special_file)
+                special_dest = os.path.join(target_folder, special_file)
+                if os.path.exists(special_source) and not os.path.exists(special_dest):
+                    shutil.copy(special_source, special_dest)
+                    print(f"Copied {special_file} to {target_folder}")
+
             print(f"Copied {file_name} to {target_folder}")
 
         except Exception as e:
@@ -112,16 +123,27 @@ def sort_astrophotographs(source_dir: str, destination_dir: str) -> None:
                     shutil.copy(flat_file, flat_destination_file)
                     print(f"Copied flat {flat_file_name} to {target_folder}")
 
+def process_nightly_sessions(parent_dir, destination_dir):
+    """
+    Processes all subdirectories in parent_dir as nightly sessions.
+    Each subdirectory is treated as a source_dir for sort_astrophotographs.
+    """
+    for entry in os.listdir(parent_dir):
+        session_path = os.path.join(parent_dir, entry)
+        if os.path.isdir(session_path):
+            print(f"Processing nightly session: {session_path}")
+            sort_astrophotographs(session_path, destination_dir)
 
 if __name__ == "__main__":
     # Replace these paths with your actual source and destination directories
     if len(sys.argv) < 3:
-        print(
-            "Usage: python archive_sources.py <source_directory> "
-            "<destination_directory>"
-        )
+        print("Usage: python archive_sources.py <source_directory> <destination_directory> [--batch]")
         sys.exit(1)
     source_directory = sys.argv[1]
     destination_directory = sys.argv[2]
+    batch_mode = len(sys.argv) > 3 and sys.argv[3] == "--batch"
 
-    sort_astrophotographs(source_directory, destination_directory)
+    if batch_mode:
+        process_nightly_sessions(source_directory, destination_directory)
+    else:
+        sort_astrophotographs(source_directory, destination_directory)
