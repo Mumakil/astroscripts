@@ -1,0 +1,2 @@
+TargetName,RACoordinates,DECCoordinates,TelescopeName,FocalLength,FocalRatio,CameraName,PixelSize,BitDepth,ObserverLatitude,ObserverLongitude,ObserverElevation
+Barnard 150,20h 51m 6s,"60° 11' 00""",FLT-91,432,4.7,ZWO ASI2600MC Pro,3.76,16,42.222,-6.988,1250

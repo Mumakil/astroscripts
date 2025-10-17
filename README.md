@@ -14,6 +14,7 @@ A collection of scripts to assist with astrophotography workflows. These scripts
   - [fits_header.sh](#fits_headersh)
   - [statistics.sh](#statisticssh)
   - [archive_sources.sh](#archive_sourcessh)
+  - [session_report.sh](#session_reportsh)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -28,14 +29,15 @@ A collection of scripts to assist with astrophotography workflows. These scripts
     cd astroscripts
     ```
 
-2. Ensure you have the following installed:
-    - **Bash** (for shell scripts)
-    - **Python 3.x** (for Python scripts)
-    - The `astropy` library for Python:
+2. Install dependencies:
 
-      ```bash
-      pip install astropy
-      ```
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+    This will install:
+    - **astropy** (for FITS file processing)
+    - **requests** (for Pushover notifications in session_report.sh)
 
 ---
 
@@ -161,6 +163,58 @@ Sorts astrophotographs into folders with structure `PREFIX/targetname/SESSION_da
 
 - If `--batch` is provided as the third argument, all subdirectories of `<parent_directory_of_sessions>` will be processed as nightly sessions.
 - Without `--batch`, only the specified `<source_directory>` will be processed.
+
+---
+
+### `session_report.sh`
+
+Generate and send a comprehensive imaging session report via Pushover push notification.
+
+**Usage**:
+
+```bash
+session_report.sh <root_directory> <pushover_token> <pushover_user>
+```
+
+**Parameters**:
+
+- `root_directory`: Directory containing YYYY-MM-DD session folders
+- `pushover_token`: Your Pushover API token (get from pushover.net)
+- `pushover_user`: Your Pushover user key
+
+**Details**:
+
+- Automatically finds the latest YYYY-MM-DD session directory
+- Analyzes .xisf files and CSV metadata (ImageMetaData.csv, AcquisitionDetails.csv)
+- Reports file counts, image types, targets, filters, exposure time, and session duration
+- Sends formatted summary to your phone via Pushover
+
+**Example**:
+
+```bash
+session_report.sh /path/to/nightly/sessions abc123token xyz789user
+```
+
+**Sample Report**:
+```
+🌟 Imaging Session Report - 2024-10-17
+
+📁 Total Files: 63
+
+📷 Image Types:
+  • Light: 63
+
+🎯 Targets:
+  • M 31 Panel 1: 35 frames
+  • Barnard 150: 28 frames
+
+🔴 Filters:
+  • UV/IR-cut: 63 frames
+
+⏱️ Total Exposure: 5h 15m 0s
+
+📅 Session Duration: 7h 30m 45s
+```
 
 ---
 
