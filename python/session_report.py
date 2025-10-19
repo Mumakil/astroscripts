@@ -47,7 +47,6 @@ def find_latest_session_directory(root_dir: str) -> Optional[Path]:
 def analyze_session_data(session_dir: Path) -> Dict:
     """Analyze session data from .xisf files and CSV metadata."""
     analysis = {
-        "total_files": 0,
         "by_type": {},
         "by_filter": {},
         "by_target": {},
@@ -61,8 +60,6 @@ def analyze_session_data(session_dir: Path) -> Dict:
     xisf_files = []
     for pattern in xisf_patterns:
         xisf_files.extend(glob.glob(str(session_dir / "**" / pattern), recursive=True))
-
-    analysis["total_files"] = len(xisf_files)
 
     # Parse ImageMetaData.csv if it exists
     metadata_csv = session_dir / "ImageMetaData.csv"
@@ -94,39 +91,43 @@ def analyze_session_data(session_dir: Path) -> Dict:
                         analysis["by_filter"].get(filter_name, 0) + 1
                     )
 
-                    # Extract target from filename
-                    # Format: TYPE_YYYY-MM-DD_HH-MM-SS_TargetName_Filter_Temp_Duration_NNNN.xisf
-                    filename_parts = filename.replace(".xisf", "").split("_")
-                    if len(filename_parts) >= 6:
-                        # Target name starts after TIME (index 2) and ends before filter
-                        # Find where the filter starts by matching against FilterName
-                        filter_name_clean = filter_name.replace("/", "-").replace(
-                            " ", "-"
-                        )
-                        target_parts = []
-
-                        # Collect parts from index 3 onwards until we hit the filter
-                        for i in range(3, len(filename_parts)):
-                            part = filename_parts[i]
-                            # Check if this part starts the filter name
-                            if (
-                                part == filter_name_clean
-                                or part in filter_name
-                                or (
-                                    part.startswith("-")
-                                    and part[1:].replace(".", "").isdigit()
-                                )
-                                or part.endswith("s")
-                                or part.isdigit()
-                            ):
-                                break
-                            target_parts.append(part)
-
-                        target = (
-                            " ".join(target_parts) if target_parts else "Unknown Target"
-                        )
+                    # For calibration frames, use the image type as the target
+                    if img_type in ["Dark", "Bias", "Flat"]:
+                        target = f"{img_type} frames"
                     else:
-                        target = "Unknown Target"
+                        # Extract target from filename for Light frames
+                        # Format: TYPE_YYYY-MM-DD_HH-MM-SS_TargetName_Filter_Temp_Duration_NNNN.xisf
+                        filename_parts = filename.replace(".xisf", "").split("_")
+                        if len(filename_parts) >= 6:
+                            # Target name starts after TIME (index 2) and ends before filter
+                            # Find where filter starts by matching against FilterName
+                            filter_name_clean = filter_name.replace("/", "-").replace(" ", "-")
+                            target_parts = []
+
+                            # Collect parts from index 3 onwards until we hit the filter
+                            for i in range(3, len(filename_parts)):
+                                part = filename_parts[i]
+                                # Check if this part starts the filter name
+                                if (
+                                    part == filter_name_clean
+                                    or part in filter_name
+                                    or (
+                                        part.startswith("-")
+                                        and part[1:].replace(".", "").isdigit()
+                                    )
+                                    or part.endswith("s")
+                                    or part.isdigit()
+                                ):
+                                    break
+                                target_parts.append(part)
+
+                            target = (
+                                " ".join(target_parts)
+                                if target_parts
+                                else "Unknown Target"
+                            )
+                        else:
+                            target = "Unknown Target"
 
                     analysis["by_target"][target] = (
                         analysis["by_target"].get(target, 0) + 1
@@ -175,10 +176,41 @@ def analyze_session_data(session_dir: Path) -> Dict:
         except Exception as e:
             print(f"Warning: Could not process AcquisitionDetails.csv: {e}")
 
-    # If no CSV data, fall back to counting .xisf files
-    if analysis["total_files"] == 0:
-        analysis["total_files"] = len(xisf_files)
-        if xisf_files:
+    # Also count any .xisf files that might not be in CSV (like calibration frames)
+    if len(xisf_files) > 0:
+        # Count files by type from actual filenames
+        file_type_counts = {"Light": 0, "Dark": 0, "Bias": 0, "Flat": 0, "Unknown": 0}
+
+        for xisf_file in xisf_files:
+            filename = Path(xisf_file).name
+            if filename.startswith("LIGHT_"):
+                file_type_counts["Light"] += 1
+            elif filename.startswith("DARK_"):
+                file_type_counts["Dark"] += 1
+            elif filename.startswith("BIAS_"):
+                file_type_counts["Bias"] += 1
+            elif filename.startswith("FLAT_"):
+                file_type_counts["Flat"] += 1
+            else:
+                file_type_counts["Unknown"] += 1
+
+        # Add calibration frames to targets if they exist but weren't in CSV
+        for frame_type, count in file_type_counts.items():
+            if count > 0 and frame_type in ["Dark", "Bias", "Flat"]:
+                target_name = f"{frame_type} frames"
+                if target_name not in analysis["by_target"]:
+                    analysis["by_target"][target_name] = count
+                    analysis["by_type"][frame_type] = count
+
+        # If no CSV data was found at all, report all file counts
+        if not analysis["by_target"]:
+            for frame_type, count in file_type_counts.items():
+                if count > 0:
+                    if frame_type in ["Dark", "Bias", "Flat"]:
+                        analysis["by_target"][f"{frame_type} frames"] = count
+                    else:
+                        analysis["by_target"]["Unknown files"] = count
+                    analysis["by_type"][frame_type] = count
             print(f"Found {len(xisf_files)} .xisf files but no CSV metadata")
 
     return analysis
@@ -204,25 +236,24 @@ def generate_report_message(session_dir: Path, analysis: Dict) -> str:
 
     message = f"🌟 Imaging Session Report - {session_date}\n\n"
 
-    if analysis["total_files"] == 0:
-        message += "No FITS files found in session directory."
+    # Check if we have any data at all
+    if not analysis["by_target"] and not analysis["by_type"]:
+        message += "No session data found."
         return message
 
-    message += f"📁 Total Files: {analysis['total_files']}\n"
+    # Targets (main section)
+    if analysis["by_target"]:
+        message += "🎯 Targets & Files:\n"
+        for target, count in sorted(
+            analysis["by_target"].items(), key=lambda x: x[1], reverse=True
+        ):
+            message += f"  • {target}: {count} frames\n"
 
     # Image types
     if analysis["by_type"]:
         message += "\n📷 Image Types:\n"
         for img_type, count in sorted(analysis["by_type"].items()):
             message += f"  • {img_type}: {count}\n"
-
-    # Targets
-    if analysis["by_target"]:
-        message += "\n🎯 Targets:\n"
-        for target, count in sorted(
-            analysis["by_target"].items(), key=lambda x: x[1], reverse=True
-        ):
-            message += f"  • {target}: {count} frames\n"
 
     # Filters
     if analysis["by_filter"]:
