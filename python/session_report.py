@@ -13,7 +13,7 @@ import glob
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import requests
 
@@ -44,9 +44,9 @@ def find_latest_session_directory(root_dir: str) -> Optional[Path]:
     return max(date_dirs, key=lambda d: d.name)
 
 
-def analyze_session_data(session_dir: Path) -> Dict:
+def analyze_session_data(session_dir: Path) -> Dict[str, Any]:
     """Analyze session data from .xisf files and CSV metadata."""
-    analysis = {
+    analysis: Dict[str, Any] = {
         "by_type": {},
         "by_filter": {},
         "by_target": {},
@@ -85,23 +85,26 @@ def analyze_session_data(session_dir: Path) -> Dict:
                         analysis["by_type"].get(img_type, 0) + 1
                     )
 
-                    # Filter
-                    filter_name = row.get("FilterName", "No Filter").strip()
-                    analysis["by_filter"][filter_name] = (
-                        analysis["by_filter"].get(filter_name, 0) + 1
-                    )
+                    # Filter (only count light frames, not calibration frames)
+                    if img_type == "Light":
+                        filter_name = row.get("FilterName", "No Filter").strip()
+                        analysis["by_filter"][filter_name] = (
+                            analysis["by_filter"].get(filter_name, 0) + 1
+                        )
 
                     # For calibration frames, use the image type as the target
                     if img_type in ["Dark", "Bias", "Flat"]:
                         target = f"{img_type} frames"
                     else:
                         # Extract target from filename for Light frames
-                        # Format: TYPE_YYYY-MM-DD_HH-MM-SS_TargetName_Filter_Temp_Duration_NNNN.xisf
+                        # Format: TYPE_YYYY-MM-DD_HH-MM-SS_TargetName_...
                         filename_parts = filename.replace(".xisf", "").split("_")
                         if len(filename_parts) >= 6:
-                            # Target name starts after TIME (index 2) and ends before filter
-                            # Find where filter starts by matching against FilterName
-                            filter_name_clean = filter_name.replace("/", "-").replace(" ", "-")
+                            # Target name starts after TIME (index 2)
+                            # Find where filter starts
+                            filter_name_clean = filter_name.replace("/", "-").replace(
+                                " ", "-"
+                            )
                             target_parts = []
 
                             # Collect parts from index 3 onwards until we hit the filter
@@ -194,13 +197,13 @@ def analyze_session_data(session_dir: Path) -> Dict:
             else:
                 file_type_counts["Unknown"] += 1
 
-        # Add calibration frames to targets if they exist but weren't in CSV
+        # Use actual file counts for calibration frames (CSV may duplicate)
         for frame_type, count in file_type_counts.items():
             if count > 0 and frame_type in ["Dark", "Bias", "Flat"]:
                 target_name = f"{frame_type} frames"
-                if target_name not in analysis["by_target"]:
-                    analysis["by_target"][target_name] = count
-                    analysis["by_type"][frame_type] = count
+                # Always use file count, not CSV (may list frames 2x)
+                analysis["by_target"][target_name] = count
+                analysis["by_type"][frame_type] = count
 
         # If no CSV data was found at all, report all file counts
         if not analysis["by_target"]:
@@ -230,7 +233,7 @@ def format_time_duration(seconds: float) -> str:
         return f"{remaining_seconds}s"
 
 
-def generate_report_message(session_dir: Path, analysis: Dict) -> str:
+def generate_report_message(session_dir: Path, analysis: Dict[str, Any]) -> str:
     """Generate a formatted report message."""
     session_date = session_dir.name
 
@@ -245,7 +248,9 @@ def generate_report_message(session_dir: Path, analysis: Dict) -> str:
     if analysis["by_target"]:
         message += "🎯 Targets & Files:\n"
         for target, count in sorted(
-            analysis["by_target"].items(), key=lambda x: x[1], reverse=True
+            analysis["by_target"].items(),
+            key=lambda x: x[1],  # type: ignore[no-any-return]
+            reverse=True,
         ):
             message += f"  • {target}: {count} frames\n"
 
