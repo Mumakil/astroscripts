@@ -1,0 +1,61 @@
+# qualify_frames sample configuration
+#
+# Copy to qualify_frames.conf (or any name) and pass with --config.
+# CLI flags always override values set here.
+#
+# Usage:
+#   ./qualify_frames.sh --config qualify_frames.conf /path/to/target
+#   ./qualify_frames.sh --config qualify_frames.conf --apply /output/dir /path/to/target
+#
+# Threshold guidance (based on 12864 frames from 2023-2025):
+#
+#   Metric       Min    5th%  25th%  Median  75th%  95th%   Max
+#   HFR         0.00   1.79   1.90    1.98   2.04   2.15   7.77
+#   FWHM"       6.58   7.13   7.34    7.51   7.73   8.27  13.35
+#   Stars          0   1012   2281    4570   8155  16596  21156
+#   Eccen.      0.25   0.33   0.35    0.37   0.39   0.44   0.88
+#   Guide"      0.00   0.53   0.70    0.86   1.01   1.29 140.36
+#   ADUMed       500    527    580     651    716   1208   3255
+#   Air         1.00   1.03   1.15    1.50   2.00   2.62   3.77
+#   SQM        15.47  18.29  21.14   21.46  21.61  21.77  21.88
+
+[qualify_frames]
+
+# Half-flux radius — primary sharpness indicator.
+# Median is 1.98; anything above ~2.5 is noticeably soft.
+hfr_max = 2.5
+
+# FWHM in arcseconds — similar to HFR, may not be available in all sessions.
+# Median is 7.51; 95th percentile is 8.27.
+fwhm_max = 9.0
+
+# Minimum detected star count. Very low counts indicate cloud, fog, or
+# severe tracking loss. 5th percentile is ~1012.
+stars_min = 500
+
+# Star eccentricity (0 = perfectly round, 1 = fully elongated).
+# Values above ~0.55 suggest trailing or collimation issues.
+# 95th percentile is 0.44.
+eccentricity_max = 0.55
+
+# Guiding RMS in arcseconds. Catches sessions with major guiding failures.
+# 95th percentile is 1.29; max observed is 140 (clearly a runaway).
+guiding_rms_max = 2.0
+
+# Uncomment to filter on sky/environment conditions:
+
+# Minimum sky quality in mag/arcsec^2 (higher = darker sky).
+# Median is 21.46; readings below 20 indicate significant light pollution or clouds.
+# sky_quality_min = 20.0
+
+# Maximum airmass. Median is 1.50; above 3.0 is quite high.
+# airmass_max = 3.0
+
+# Maximum background ADU median. Useful to catch bright moonlit or twilight frames.
+# 95th percentile is 1208; values above 1500 suggest significant background glow.
+# adu_median_max = 1500
+
+# Cloud cover and humidity are logged but tend to be unreliable at this site
+# (humidity reads 99% most nights). Uncomment only if you observe meaningful variation.
+# cloud_cover_max = 20
+# humidity_max = 95
